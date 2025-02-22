@@ -17,17 +17,27 @@ class Statesmith < Formula
     dotnet = Formula["dotnet"]
     args = %W[
       -c Release
-      --framework net#{dotnet.version.major_minor}
-      --no-self-contained
-      --use-current-runtime
       -p:AppHostRelativeDotNet=#{dotnet.opt_libexec.relative_path_from(bin)}
       -p:Version=#{version}
+    ]
+    # statesmith dll does not support as many frameworks as cli
+    dll_args = %W[
+      --framework net6.0
+    ]
+    cli_args = %W[
+      --no-self-contained
+      --use-current-runtime
+      --framework net#{dotnet.version.major_minor}
       -p:PublishSingleFile=true
     ]
 
-    chdir "src/StateSmith.Cli" do
-      system "dotnet", "publish", *args
+    chdir "src/StateSmith" do
+      system "dotnet", "publish", *args, *dll_args
+      libexec.install "./bin/Release/net6.0/publish/StateSmith.dll"
+    end
 
+    chdir "src/StateSmith.Cli" do
+      system "dotnet", "publish", *args, *cli_args
       libexec.install "./bin/Release/net#{dotnet.version.major_minor}/#{dotnet_os_arch}/publish/StateSmith.Cli"
     end
 
